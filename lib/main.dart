@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'screens/homedashboard.dart';
-import 'screens/information.dart';
+import 'authentication/information.dart';
 import 'authentication/login.dart';
 import 'Admin Dashboard/admin.dart';
 import 'screens/customer.dart';
@@ -29,21 +29,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/customerscreen': (context) => const UserDashboardScreen(),
         '/shopownerDashboard': (context) => const ShopScreen(userUid: ''),
-        '/signup': (context) => InformationScreen(
-          userUid: '',
-          onInfoSubmitted: (userType) async {
-            await submitUserType(userType);
-            if (userType == 'Customer') {
-              Navigator.pushReplacementNamed(context, '/customerscreen');
-            } else if (userType == 'Shop Owner') {
-              Navigator.pushReplacementNamed(context, '/shopownerDashboard');
-            } else if (userType == 'ADMIN') {
-              Navigator.pushReplacementNamed(context, '/adminDashboard');
-            } else {
-              print('Invalid user type.');
-            }
-          },
-        ),
+        // '/signup': (context) => const InformationScreen(userUid: ''),
         '/adminDashboard': (context) => const AdminScreen(),
       },
     );

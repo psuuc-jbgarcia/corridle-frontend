@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:corridle/User_Dashboard/user_dasboard.dart';
+import 'package:corridle/authentication/information.dart';
 import 'package:corridle/const_file/const.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:corridle/Authentication/login.dart';
-import 'package:corridle/screens/information.dart';
 import 'package:corridle/screens/customer.dart';
 import 'package:corridle/StoreRegistrationScreen.dart';
 
@@ -86,6 +86,7 @@ Future<void> _signUp() async {
       if (data['success'] == true) {
         final String userId = data['user_id'].toString();
         final String userType = data['userType'] ?? 'Customer';
+        final String UserEmail=data['email'];
         await _showVerificationDialog();
 
         if (userType == 'Shop Owner') {
@@ -94,7 +95,7 @@ Future<void> _signUp() async {
           );
         } else {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => LoginScreen()),
+            MaterialPageRoute(builder: (_) => InformationScreen(userUid: userId,email: UserEmail,)),
           );
         }
       } else {

@@ -1,19 +1,18 @@
 import 'dart:convert';
 import 'package:corridle/User_Dashboard/user_dasboard.dart';
+import 'package:corridle/const_file/const.dart';
 import 'package:corridle/screens/shopdashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:corridle/screens/customer.dart';
 
 class InformationScreen extends StatefulWidget {
-  final String userUid;
-  final String? googleDisplayName;
+  final String? userUid;
+  final String? email;
 
   const InformationScreen({
     super.key,
     required this.userUid,
-    this.googleDisplayName,
-    required Future<Null> Function(dynamic userType) onInfoSubmitted,
+    required this.email,
   });
 
   @override
@@ -30,26 +29,33 @@ class _InformationScreenState extends State<InformationScreen> {
 
   String _userType = 'Customer';
 
+  @override
+  void initState() {
+    super.initState();
+    _emailController.text = widget.email ?? '';
+  }
+
   Future<void> _submitInformation() async {
-    final url = Uri.parse('https://yourdomain.com/api/save_user_info.php'); // <-- replace with your real PHP API URL
+    final userUid = widget.userUid ?? '000000';
+    final url = Uri.parse(save_info);
+
+    if (_dobController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a valid Date of Birth')),
+      );
+      return;
+    }
 
     Map<String, dynamic> userData = {
-      'user_uid': widget.userUid,
+      'user_uid': userUid,
       'firstName': _firstNameController.text.trim(),
       'middleName': _middleNameController.text.trim(),
       'lastName': _lastNameController.text.trim(),
       'phoneNumber': _phoneNumberController.text.trim(),
-      'dateOfBirth': _dobController.text.trim(),
+      'dateOfBirth': _dobController.text.trim(), // Format: YYYY-MM-DD
       'email': _emailController.text.trim(),
-      'userType': _userType,
-      'informationCompleted': true,
+      'userType': _userType, // For user table update
     };
-
-    if (_userType == 'Shop Owner') {
-      userData['storeId'] = 'store_${widget.userUid.substring(0, 6)}';
-    } else if (_userType == 'Customer') {
-      userData['customerId'] = 'customer_${widget.userUid.substring(0, 6)}';
-    }
 
     try {
       final response = await http.post(
@@ -58,28 +64,28 @@ class _InformationScreenState extends State<InformationScreen> {
         body: jsonEncode(userData),
       );
 
-      if (response.statusCode == 200) {
-        final respData = jsonDecode(response.body);
-        if (respData['success'] == true) {
-          if (_userType == 'Customer') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const UserDashboardScreen()),
-            );
-          } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => ShopScreen(userUid: widget.userUid)),
-            );
-          }
+      final data = jsonDecode(response.body);
+      print('RESPONSE: $data');
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['message'] ?? 'Information saved.')),
+        );
+
+        if (_userType == 'Customer') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const UserDashboardScreen()),
+          );
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${respData['message']}')),
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => ShopScreen(userUid: userUid)),
           );
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Server error: ${response.statusCode}')),
+          SnackBar(content: Text('Error: ${data['message']}')),
         );
       }
     } catch (e) {
@@ -90,22 +96,9 @@ class _InformationScreenState extends State<InformationScreen> {
   }
 
   @override
-  void initState() {
-    super.initState();
-
-    if (widget.googleDisplayName != null) {
-      List<String> nameParts = widget.googleDisplayName!.split(' ');
-      if (nameParts.isNotEmpty) {
-        _firstNameController.text = nameParts[0];
-        if (nameParts.length > 1) {
-          _lastNameController.text = nameParts.last;
-        }
-      }
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final safeUserId = widget.userUid ?? 'null (not provided)';
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -113,7 +106,6 @@ class _InformationScreenState extends State<InformationScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset('assets/images/Logo.jpg', height: 100),
               const SizedBox(height: 20),
               Container(
                 padding: const EdgeInsets.all(20),
@@ -135,6 +127,10 @@ class _InformationScreenState extends State<InformationScreen> {
                       'Personal Information',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
+                    Text(
+                      'User ID: $safeUserId',
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
                     const SizedBox(height: 10),
                     Row(
                       children: [
@@ -150,11 +146,11 @@ class _InformationScreenState extends State<InformationScreen> {
                       children: [
                         Expanded(child: _buildTextField('Phone Number', _phoneNumberController)),
                         const SizedBox(width: 10),
-                        Expanded(child: _buildTextField('Date of Birth', _dobController)),
+                        Expanded(child: _buildDatePickerField('Date of Birth', _dobController)),
                       ],
                     ),
                     const SizedBox(height: 10),
-                    _buildTextField('Email', _emailController),
+                    _buildTextField('Email', _emailController, readOnly: true),
                     const SizedBox(height: 10),
                     DropdownButtonFormField<String>(
                       value: _userType,
@@ -186,10 +182,8 @@ class _InformationScreenState extends State<InformationScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
-                "Terms of Use     Privacy Policy     Support",
-                style: TextStyle(color: Colors.grey, fontSize: 12),
-              ),
+              const Text("Terms of Use     Privacy Policy     Support",
+                  style: TextStyle(color: Colors.grey, fontSize: 12)),
               const SizedBox(height: 5),
               const Text("© Corridle 2025", style: TextStyle(color: Colors.grey, fontSize: 12)),
             ],
@@ -199,16 +193,39 @@ class _InformationScreenState extends State<InformationScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller) {
+  Widget _buildTextField(String label, TextEditingController controller, {bool readOnly = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
-      child: TextField(
+      child: TextFormField(
         controller: controller,
+        readOnly: readOnly,
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
         ),
       ),
+    );
+  }
+
+  Widget _buildDatePickerField(String label, TextEditingController controller) {
+    return TextFormField(
+      controller: controller,
+      readOnly: true,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+      ),
+      onTap: () async {
+        final pickedDate = await showDatePicker(
+          context: context,
+          initialDate: DateTime(2000),
+          firstDate: DateTime(1900),
+          lastDate: DateTime.now(),
+        );
+        if (pickedDate != null) {
+          controller.text = pickedDate.toIso8601String().split('T')[0];
+        }
+      },
     );
   }
 }
