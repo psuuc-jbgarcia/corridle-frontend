@@ -9,11 +9,11 @@ class ShopScreen extends StatelessWidget {
       onWillPop: () async => false, // Disable back button
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('admin test'),
+          title: const Text('store test'),
           automaticallyImplyLeading: false, // Remove back arrow from AppBar
         ),
         body: const Center(
-          child: Text('Welcome to the admin Dashboard!'),
+          child: Text('Welcome to the store Dashboard!'),
         ),
       ),
     );

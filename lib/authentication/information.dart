@@ -1,7 +1,8 @@
 import 'dart:convert';
+import 'package:corridle/Authentication/login.dart';
+import 'package:corridle/Store_Dashboard/storeregistrationscreen.dart';
 import 'package:corridle/User_Dashboard/user_dasboard.dart';
 import 'package:corridle/const_file/const.dart';
-import 'package:corridle/screens/shopdashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -20,6 +21,8 @@ class InformationScreen extends StatefulWidget {
 }
 
 class _InformationScreenState extends State<InformationScreen> {
+  final _formKey = GlobalKey<FormState>();
+
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _middleNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
@@ -36,15 +39,10 @@ class _InformationScreenState extends State<InformationScreen> {
   }
 
   Future<void> _submitInformation() async {
+    if (!_formKey.currentState!.validate()) return;
+
     final userUid = widget.userUid ?? '000000';
     final url = Uri.parse(save_info);
-
-    if (_dobController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a valid Date of Birth')),
-      );
-      return;
-    }
 
     Map<String, dynamic> userData = {
       'user_uid': userUid,
@@ -52,9 +50,9 @@ class _InformationScreenState extends State<InformationScreen> {
       'middleName': _middleNameController.text.trim(),
       'lastName': _lastNameController.text.trim(),
       'phoneNumber': _phoneNumberController.text.trim(),
-      'dateOfBirth': _dobController.text.trim(), // Format: YYYY-MM-DD
+      'dateOfBirth': _dobController.text.trim(),
       'email': _emailController.text.trim(),
-      'userType': _userType, // For user table update
+      'userType': _userType,
     };
 
     try {
@@ -64,35 +62,59 @@ class _InformationScreenState extends State<InformationScreen> {
         body: jsonEncode(userData),
       );
 
-      final data = jsonDecode(response.body);
-      print('RESPONSE: $data');
+      print('RAW RESPONSE BODY: ${response.body}');
 
-      if (response.statusCode == 200 && data['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'] ?? 'Information saved.')),
-        );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('DECODED JSON: $data');
 
-        if (_userType == 'Customer') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const UserDashboardScreen()),
+        if (data['success'] == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Information saved.')),
           );
+
+          if (_userType == 'Customer') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => LoginScreen()),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => StoreRegistrationScreen(
+                  userUid: userUid,
+                  email: _emailController.text.trim(),
+                  phone_number: _phoneNumberController.text.trim(),
+                ),
+              ),
+            );
+          }
         } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => ShopScreen(userUid: userUid)),
-          );
+          _showCenterAlert(context, 'Server Error: ${data['message']}');
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${data['message']}')),
-        );
+        _showCenterAlert(context, 'HTTP Error: ${response.statusCode}');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save information: $e')),
-      );
+      _showCenterAlert(context, 'Failed to send request: $e');
     }
+  }
+
+  void _showCenterAlert(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        alignment: Alignment.center,
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -121,64 +143,67 @@ class _InformationScreenState extends State<InformationScreen> {
                     ),
                   ],
                 ),
-                child: Column(
-                  children: [
-                    const Text(
-                      'Personal Information',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      'User ID: $safeUserId',
-                      style: const TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(child: _buildTextField('First Name', _firstNameController)),
-                        const SizedBox(width: 10),
-                        Expanded(child: _buildTextField('M.I. (Optional)', _middleNameController)),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    _buildTextField('Last Name', _lastNameController),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(child: _buildTextField('Phone Number', _phoneNumberController)),
-                        const SizedBox(width: 10),
-                        Expanded(child: _buildDatePickerField('Date of Birth', _dobController)),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    _buildTextField('Email', _emailController, readOnly: true),
-                    const SizedBox(height: 10),
-                    DropdownButtonFormField<String>(
-                      value: _userType,
-                      items: const [
-                        DropdownMenuItem(value: 'Customer', child: Text('Customer')),
-                        DropdownMenuItem(value: 'Shop Owner', child: Text('Shop Owner')),
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          _userType = value!;
-                        });
-                      },
-                      decoration: const InputDecoration(
-                        labelText: 'User Type',
-                        border: OutlineInputBorder(),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Personal Information',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _submitInformation,
-                      child: const Text('Continue'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(double.infinity, 48),
+                      Text(
+                        'User ID: $safeUserId',
+                        style: const TextStyle(fontSize: 14, color: Colors.grey),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(child: _buildTextField('First Name', _firstNameController)),
+                          const SizedBox(width: 10),
+                          Expanded(child: _buildTextField('M.I. (Optional)', _middleNameController, required: false)),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      _buildTextField('Last Name', _lastNameController),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(child: _buildTextField('Phone Number', _phoneNumberController)),
+                          const SizedBox(width: 10),
+                          Expanded(child: _buildDatePickerField('Date of Birth', _dobController)),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      _buildTextField('Email', _emailController, readOnly: true),
+                      const SizedBox(height: 10),
+                      DropdownButtonFormField<String>(
+                        value: _userType,
+                        items: const [
+                          DropdownMenuItem(value: 'Customer', child: Text('Customer')),
+                          DropdownMenuItem(value: 'Shop Owner', child: Text('Shop Owner')),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _userType = value!;
+                          });
+                        },
+                        decoration: const InputDecoration(
+                          labelText: 'User Type',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: _submitInformation,
+                        child: const Text('Continue'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(double.infinity, 48),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -193,7 +218,8 @@ class _InformationScreenState extends State<InformationScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {bool readOnly = false}) {
+  Widget _buildTextField(String label, TextEditingController controller,
+      {bool readOnly = false, bool required = true}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: TextFormField(
@@ -203,6 +229,14 @@ class _InformationScreenState extends State<InformationScreen> {
           labelText: label,
           border: const OutlineInputBorder(),
         ),
+        validator: required
+            ? (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Required';
+                }
+                return null;
+              }
+            : null,
       ),
     );
   }
@@ -211,10 +245,16 @@ class _InformationScreenState extends State<InformationScreen> {
     return TextFormField(
       controller: controller,
       readOnly: true,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
+      decoration: const InputDecoration(
+        labelText: 'Date of Birth',
+        border: OutlineInputBorder(),
       ),
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Required';
+        }
+        return null;
+      },
       onTap: () async {
         final pickedDate = await showDatePicker(
           context: context,

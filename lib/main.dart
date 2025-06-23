@@ -1,5 +1,5 @@
 import 'package:corridle/User_Dashboard/user_dasboard.dart';
-import 'package:corridle/screens/shopdashboard.dart';
+import 'package:corridle/Store_Dashboard/shopdashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';

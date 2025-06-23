@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  http: ^0.13.5
+  http: ^0.13.6
   firebase_core: ^3.8.0
   firebase_auth: ^5.3.3
   cloud_firestore: ^5.5.0
@@ -23,13 +23,14 @@ dependencies:
   googleapis: ^3.0.0
   fl_chart: ^0.64.0
   googleapis_auth: ^1.4.1
-  image_picker: ^0.8.7+4  
+  image_picker: ^1.1.2  
   google_fonts: ^4.0.4
   animate_do: ^3.0.2 # Add animation package
   carousel_slider: ^4.2.1
   firebase_database: ^11.3.0
   permission_handler: ^11.0.1
   shimmer: ^2.0.0
+  path: ^1.9.1
 
 
     

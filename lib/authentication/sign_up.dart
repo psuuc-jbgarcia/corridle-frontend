@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:corridle/Authentication/login.dart';
 import 'package:corridle/screens/customer.dart';
-import 'package:corridle/StoreRegistrationScreen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -89,15 +88,10 @@ Future<void> _signUp() async {
         final String UserEmail=data['email'];
         await _showVerificationDialog();
 
-        if (userType == 'Shop Owner') {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => StoreRegistrationScreen(userUid: userId)),
-          );
-        } else {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (_) => InformationScreen(userUid: userId,email: UserEmail,)),
           );
-        }
+        
       } else {
         _showError(data['message'] ?? 'Registration failed.');
       }
