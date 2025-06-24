@@ -1,11 +1,9 @@
 import 'dart:convert';
-import 'dart:io';
-import 'package:corridle/const_file/const.dart';
+import 'package:corridle/const_file/const.dart'; // Make sure this contains your register_store URL
 import 'package:corridle/Store_Dashboard/shopdashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart' as path;
+import 'package:file_picker/file_picker.dart';
 
 class StoreRegistrationScreen extends StatefulWidget {
   final String userUid;
@@ -34,9 +32,7 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
   String? selectedCategory;
   String? selectedPartnership;
   String? ownershipStatus;
-  File? ownershipProofImage;
-
-  final ImagePicker _picker = ImagePicker();
+  PlatformFile? ownershipProofFile;
 
   @override
   void initState() {
@@ -45,18 +41,19 @@ class _StoreRegistrationScreenState extends State<StoreRegistrationScreen> {
     emailController.text = widget.email;
   }
 
-  Future<void> pickOwnershipProofImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
+  Future<void> pickOwnershipProofFile() async {
+    final result = await FilePicker.platform.pickFiles(type: FileType.image);
+    if (result != null && result.files.isNotEmpty) {
       setState(() {
-        ownershipProofImage = File(pickedFile.path);
+        ownershipProofFile = result.files.first;
       });
     }
   }
+
 Future<void> _submitForm() async {
   if (_formKey.currentState!.validate()) {
-    final storeId = "store_${widget.userUid.substring(0, 6)}_${DateTime.now().millisecondsSinceEpoch}";
-    final uri = Uri.parse(register_store); // e.g. http://yourdomain.com/api/register_store.php
+    final storeId = "${widget.userUid.substring(0, 6)}_${DateTime.now().millisecondsSinceEpoch}";
+    final uri = Uri.parse(register_store);
 
     final request = http.MultipartRequest('POST', uri);
     request.fields.addAll({
@@ -71,26 +68,28 @@ Future<void> _submitForm() async {
       'is_owner': ownershipStatus!,
     });
 
-    if (ownershipProofImage != null) {
-      final filePath = ownershipProofImage!.path;
-      print("📷 Selected image: $filePath");
-      request.files.add(await http.MultipartFile.fromPath(
+    if (ownershipProofFile != null && ownershipProofFile!.bytes != null) {
+      print("📂 Selected file: ${ownershipProofFile!.name}, size: ${ownershipProofFile!.bytes!.length} bytes");
+
+      request.files.add(http.MultipartFile.fromBytes(
         'ownership_proof',
-        filePath,
-        filename: path.basename(filePath),
+        ownershipProofFile!.bytes!,
+        filename: ownershipProofFile!.name,
       ));
+    } else {
+      print("⚠️ No file selected.");
     }
 
     try {
-      print("📤 Sending registration request...");
-      print("➡️ Fields: ${request.fields}");
-
+      print("📤 Sending request to PHP backend...");
       final response = await request.send();
-      final resultString = await response.stream.bytesToString();
 
-      print("📥 Raw response: $resultString");
+      final resultString = await response.stream.bytesToString();
+      print("📥 Raw PHP response: $resultString");
 
       final result = json.decode(resultString);
+
+      print("✅ Decoded Response: $result");
 
       if (result['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -106,14 +105,32 @@ Future<void> _submitForm() async {
         );
       }
     } catch (e) {
-      print("❌ Error sending request: $e");
+      print("❌ Exception caught: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Request failed: $e')),
+        SnackBar(content: Text('❌ Request failed: $e')),
       );
     }
   }
 }
 
+
+  Widget _buildTextField(String label, TextEditingController controller,
+      {TextInputType inputType = TextInputType.text, int maxLines = 1}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: inputType,
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        ),
+        validator: (value) => value == null || value.isEmpty ? "This field cannot be empty" : null,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -187,13 +204,15 @@ Future<void> _submitForm() async {
                               Row(
                                 children: [
                                   ElevatedButton.icon(
-                                    onPressed: pickOwnershipProofImage,
-                                    icon: const Icon(Icons.image),
+                                    onPressed: pickOwnershipProofFile,
+                                    icon: const Icon(Icons.upload_file),
                                     label: const Text("Upload Proof of Ownership"),
                                   ),
                                   const SizedBox(width: 10),
-                                  if (ownershipProofImage != null)
-                                    Text(path.basename(ownershipProofImage!.path), overflow: TextOverflow.ellipsis),
+                                  if (ownershipProofFile != null)
+                                    Expanded(
+                                      child: Text(ownershipProofFile!.name, overflow: TextOverflow.ellipsis),
+                                    ),
                                 ],
                               ),
                               const SizedBox(height: 20),
@@ -228,24 +247,6 @@ Future<void> _submitForm() async {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildTextField(String label, TextEditingController controller,
-      {TextInputType inputType = TextInputType.text, int maxLines = 1}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: inputType,
-        maxLines: maxLines,
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-        ),
-        validator: (value) => value == null || value.isEmpty ? "This field cannot be empty" : null,
       ),
     );
   }
