@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class ShopScreen extends StatelessWidget {
-  const ShopScreen({Key? key, required String userUid}) : super(key: key);
+  final String userUid; // Step 1: Store the value
+
+  const ShopScreen({Key? key, required this.userUid}) : super(key: key); // Step 2: Assign in constructor
 
   @override
   Widget build(BuildContext context) {
@@ -9,11 +11,11 @@ class ShopScreen extends StatelessWidget {
       onWillPop: () async => false, // Disable back button
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('store test'),
+          title: const Text('Store Test'),
           automaticallyImplyLeading: false, // Remove back arrow from AppBar
         ),
-        body: const Center(
-          child: Text('Welcome to the store Dashboard!'),
+        body: Center(
+          child: Text('Welcome, your user ID is $userUid'), // Step 3: Display it
         ),
       ),
     );

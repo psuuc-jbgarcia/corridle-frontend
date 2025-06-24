@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'package:corridle/Authentication/sign_up.dart';
+import 'package:corridle/User_Dashboard/user_dasboard.dart';
+import 'package:corridle/authentication/information.dart';
 import 'package:corridle/const_file/const.dart';
+import 'package:corridle/Store_Dashboard/shopdashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:corridle/Authentication/sign_up.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -16,56 +19,77 @@ class _LoginPageState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _passwordVisible = false;
 
-  Future<void> signInWithEmail(BuildContext context) async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
+ Future<void> signInWithEmail(BuildContext context) async {
+  final email = _emailController.text.trim();
+  final password = _passwordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
-      showError(context, 'Please enter both email and password.');
-      return;
+  if (email.isEmpty || password.isEmpty) {
+    showError(context, 'Please enter both email and password.');
+    return;
+  }
+
+  try {
+    final response = await http.post(
+      Uri.parse(login_url),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': email,
+        'password': password,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      if (data['success'] == true) {
+        final userId = data['userId'];
+        final userType = data['userType'];
+        final hasStoreInfo = int.tryParse(data['has_store_info'].toString()) ?? 0;
+
+        if (hasStoreInfo == 0) {
+          // Navigate to InformationScreen to complete profile
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => InformationScreen(
+                userUid: userId,
+                email: email,
+              ),
+            ),
+          );
+        } else {
+          // Role-based navigation
+          if (userType == 'Shop Owner') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ShopScreen(userUid: userId),
+              ),
+            );
+          } else if (userType == 'Customer') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>  UserDashboardScreen(userUid: userId,),
+              ),
+            );
+          } else if (userType == 'ADMIN') {
+            showError(context, 'Admin dashboard is under development.');
+          } else {
+            showError(context, 'Unknown user type.');
+          }
+        }
+      } else {
+        showError(context, data['message'] ?? 'Login failed');
+      }
+    } else {
+      showError(context, 'Server error: ${response.statusCode}');
     }
-
-    try {
-      final response = await http.post(
-        Uri.parse(login_url), 
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'action': 'login',  // <-- Added this field
-          'email': email,
-          'password': password,
-        }),
-      );
-if (response.statusCode == 200) {
-  final data = jsonDecode(response.body);
-
-  if (data['success'] == true) {
-    final userType = data['userType'];
-    final userId = data['userId'];
-    navigateBasedOnUserType(context, userType);
-  } else {
-    // Show error for not verified or not registered
-    showError(context, data['message'] ?? 'Login failed');
+  } catch (e) {
+    showError(context, 'Error: $e');
   }
 }
- else {
-        showError(context, 'Server error: ${response.statusCode}');
-      }
-    } catch (e) {
-      showError(context, 'Error: $e');
-    }
-  }
 
-  void navigateBasedOnUserType(BuildContext context, String userType) {
-    if (userType == 'Shop Owner') {
-      Navigator.pushReplacementNamed(context, '/shopownerDashboard');
-    } else if (userType == 'Customer') {
-      Navigator.pushReplacementNamed(context, '/customerscreen');
-    } else if (userType == 'ADMIN') {
-      Navigator.pushReplacementNamed(context, '/adminDashboard');
-    } else {
-      showError(context, 'Invalid user type.');
-    }
-  }
 
   void showError(BuildContext context, String message) {
     showDialog(
@@ -92,7 +116,6 @@ if (response.statusCode == 200) {
         children: [
           const Spacer(),
           Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset('assets/images/Logo.jpg', height: 120),
               const SizedBox(height: 20),
@@ -103,30 +126,21 @@ if (response.statusCode == 200) {
               const SizedBox(height: 20),
               Container(
                 padding: const EdgeInsets.all(20),
+                width: 350,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
+                    BoxShadow(color: Colors.black12, blurRadius: 10, spreadRadius: 2),
                   ],
                 ),
-                width: 350,
                 child: Column(
                   children: [
                     TextField(
                       controller: _emailController,
                       decoration: const InputDecoration(
                         labelText: 'Email',
-                        labelStyle: TextStyle(color: Colors.black),
                         border: OutlineInputBorder(),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide:
-                              BorderSide(color: Color.fromARGB(255, 0, 0, 0), width: 2),
-                        ),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -135,17 +149,10 @@ if (response.statusCode == 200) {
                       obscureText: !_passwordVisible,
                       decoration: InputDecoration(
                         labelText: 'Password',
-                        labelStyle: const TextStyle(color: Colors.black),
                         border: const OutlineInputBorder(),
-                        focusedBorder: const OutlineInputBorder(
-                          borderSide:
-                              BorderSide(color: Color.fromARGB(255, 0, 0, 0), width: 2),
-                        ),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _passwordVisible
-                                ? Icons.visibility
-                                : Icons.visibility_off,
+                            _passwordVisible ? Icons.visibility : Icons.visibility_off,
                           ),
                           onPressed: () {
                             setState(() {
@@ -161,17 +168,13 @@ if (response.statusCode == 200) {
                       child: ElevatedButton(
                         onPressed: () => signInWithEmail(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: const BorderSide(color: Colors.grey, width: 1),
-                          ),
+                          backgroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 15),
-                          elevation: 2,
+                          side: const BorderSide(color: Colors.grey),
                         ),
                         child: const Text(
                           'Log in',
-                          style: TextStyle(fontSize: 16, color: Colors.black),
+                          style: TextStyle(color: Colors.black, fontSize: 16),
                         ),
                       ),
                     ),
@@ -180,11 +183,10 @@ if (response.statusCode == 200) {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const SignUpScreen()),
+                          MaterialPageRoute(builder: (_) => const SignUpScreen()),
                         );
                       },
-                      child: const Text('Create account',
-                          style: TextStyle(fontSize: 16, color: Colors.black)),
+                      child: const Text('Create account', style: TextStyle(color: Colors.black)),
                     ),
                   ],
                 ),
@@ -194,13 +196,11 @@ if (response.statusCode == 200) {
           const Spacer(),
           Container(
             padding: const EdgeInsets.symmetric(vertical: 15),
-            width: double.infinity,
             color: Colors.grey.shade300,
+            width: double.infinity,
             child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Terms of Use  Privacy Policy  Support',
-                    style: TextStyle(fontSize: 14)),
+                Text('Terms of Use  Privacy Policy  Support', style: TextStyle(fontSize: 14)),
                 SizedBox(height: 5),
                 Text('© Corridle 2025', style: TextStyle(fontSize: 14)),
               ],

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class UserDashboardScreen extends StatelessWidget {
-  const UserDashboardScreen({super.key});
+  final String userUid;
+
+  const UserDashboardScreen({Key? key, required this.userUid}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -53,9 +55,10 @@ class UserDashboardScreen extends StatelessWidget {
             child: Center(
               child: Container(
                 padding: const EdgeInsets.all(40),
-                child: const Text(
-                  'Welcome to Corridle Dashboard!',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                child: Text(
+                  'Welcome to Corridle Dashboard!\nYour ID is $userUid',
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
                 ),
               ),
             ),

@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
       ),
       home: UserDashboard(),
       routes: {
-        '/customerscreen': (context) => const UserDashboardScreen(),
+        '/customerscreen': (context) => const UserDashboardScreen(userUid: ''),
         '/shopownerDashboard': (context) => const ShopScreen(userUid: ''),
         // '/signup': (context) => const InformationScreen(userUid: ''),
         '/adminDashboard': (context) => const AdminScreen(),
