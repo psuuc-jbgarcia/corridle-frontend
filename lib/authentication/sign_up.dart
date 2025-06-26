@@ -1,11 +1,10 @@
 import 'dart:convert';
-import 'package:corridle/User_Dashboard/user_dasboard.dart';
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:corridle/authentication/information.dart';
 import 'package:corridle/const_file/const.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:corridle/Authentication/login.dart';
-import 'package:corridle/screens/customer.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -50,92 +49,119 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
     super.dispose();
   }
 
-Future<void> _signUp() async {
-  final email = _emailController.text.trim();
-  final password = _passwordController.text.trim();
-  final confirmPassword = _confirmPasswordController.text.trim();
+  Future<void> _signUp() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
 
-  if (password != confirmPassword) {
-    _showError('Passwords do not match.');
-    return;
-  }
-  if (!isTermsAccepted) {
-    _showError('You must accept the terms and privacy policy.');
-    return;
-  }
-
-  final url = Uri.parse(register_url);
-
-  try {
-    var response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'email': email,
-        'password': password,
-      }),
-    );
-    print("Response body: ${response.body}");
-
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> data = jsonDecode(response.body);
-
-      if (data['success'] == true) {
-        final String userId = data['user_id'].toString();
-        final String userType = data['userType'] ?? 'Customer';
-        final String UserEmail=data['email'];
-        await _showVerificationDialog();
-
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => InformationScreen(userUid: userId,email: UserEmail,)),
-          );
-        
-      } else {
-        _showError(data['message'] ?? 'Registration failed.');
-      }
-    } else {
-      _showError('Server error: ${response.statusCode}');
+    if (password != confirmPassword) {
+      _showError('Passwords do not match.');
+      return;
     }
-  } catch (e) {
-    _showError('Network error: $e');
+    if (!isTermsAccepted) {
+      _showError('You must accept the terms and privacy policy.');
+      return;
+    }
+
+    final url = Uri.parse(register_url);
+
+    try {
+      var response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
+      );
+      print("Response body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+
+        if (data['success'] == true) {
+          final String userId = data['user_id'].toString();
+          final String userEmail = data['email'];
+
+          await AwesomeDialog(
+            context: context,
+            dialogType: DialogType.noHeader,
+            animType: AnimType.scale,
+            width: MediaQuery.of(context).size.width * 0.75,
+            body: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Registration Successful!',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Welcome to Corridle! Proceeding to setup your information.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 15, height: 1.4),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(builder: (_) => InformationScreen(userUid: userId, email: userEmail)),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                      child: const Text('Continue'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ).show();
+        } else {
+          _showError(data['message'] ?? 'Registration failed.');
+        }
+      } else {
+        _showError('Server error: ${response.statusCode}');
+      }
+    } catch (e) {
+      _showError('Network error: $e');
+    }
   }
-}
 
   void _showError(String message) {
-    showDialog(
+    AwesomeDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Error', style: TextStyle(color: Colors.red)),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _showVerificationDialog() async {
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Verify Your Email'),
-          content: const Text('A verification email has been sent. Please check your inbox.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
+      dialogType: DialogType.noHeader,
+      animType: AnimType.rightSlide,
+      width: MediaQuery.of(context).size.width * 0.75,
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Oops!',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15, height: 1.4),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text('Close'),
+              ),
             ),
           ],
-        );
-      },
-    );
+        ),
+      ),
+    ).show();
   }
 
   Widget _buildRequirement(String text, bool isMet) {

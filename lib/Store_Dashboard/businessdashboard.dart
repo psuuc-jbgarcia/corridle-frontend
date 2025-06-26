@@ -16,7 +16,6 @@ import 'schedule.dart';
 import 'setting.dart';
 import 'review.dart';
 
-
 class ShopownerDashboard extends StatefulWidget {
   final String userUid;
 
@@ -55,7 +54,6 @@ class _ShopownerDashboardState extends State<ShopownerDashboard> {
         });
       }
     } else {
-      // Error handling
       print('Failed to load store data');
     }
   }
@@ -141,7 +139,7 @@ class _ShopownerDashboardState extends State<ShopownerDashboard> {
         title: Row(
           children: [
             if (!isMobile)
-              Image.asset('assets/images/Logo.jpg', height: 32, fit: BoxFit.contain),
+              const Text("Corridle", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
           ],
         ),
         actions: [
@@ -156,12 +154,17 @@ class _ShopownerDashboardState extends State<ShopownerDashboard> {
             ),
           Padding(
             padding: const EdgeInsets.only(right: 12, left: 8),
-            child: CircleAvatar(
-              radius: 18,
-              backgroundImage: businessLogo.isNotEmpty
-                  ? NetworkImage(businessLogo)
-                  : const AssetImage('assets/images/default_store.png') as ImageProvider,
-            ),
+            child: businessLogo.isNotEmpty
+                ? CircleAvatar(
+                    radius: 18,
+                    backgroundImage: NetworkImage(businessLogo),
+                    backgroundColor: Colors.grey.shade200,
+                  )
+                : const CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Colors.grey,
+                    child: Icon(Icons.store, color: Colors.white),
+                  ),
           ),
         ],
       ),
@@ -178,9 +181,11 @@ class _ShopownerDashboardState extends State<ShopownerDashboard> {
               children: [
                 const SizedBox(height: 30),
                 Expanded(
-                    child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: _buildMainContent())),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _buildMainContent(),
+                  ),
+                ),
                 const Padding(
                   padding: EdgeInsets.all(10),
                   child: Text(
@@ -207,12 +212,17 @@ class _ShopownerDashboardState extends State<ShopownerDashboard> {
       child: Column(
         children: [
           const SizedBox(height: 20),
-          CircleAvatar(
-            radius: 50,
-            backgroundImage: businessLogo.isNotEmpty
-                ? NetworkImage(businessLogo)
-                : const AssetImage('assets/images/default_store.png') as ImageProvider,
-          ),
+          businessLogo.isNotEmpty
+              ? CircleAvatar(
+                  radius: 50,
+                  backgroundImage: NetworkImage(businessLogo),
+                  backgroundColor: Colors.grey.shade200,
+                )
+              : const CircleAvatar(
+                  radius: 50,
+                  backgroundColor: Colors.grey,
+                  child: Icon(Icons.store, color: Colors.white, size: 40),
+                ),
           const SizedBox(height: 12),
           Text(storeName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
           const Text('Web application services', style: TextStyle(fontSize: 12)),

@@ -1,5 +1,5 @@
+import 'package:corridle/Store_Dashboard/businessdashboard.dart';
 import 'package:corridle/User_Dashboard/user_dasboard.dart';
-import 'package:corridle/Store_Dashboard/shopdashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
       home: UserDashboard(),
       routes: {
         '/customerscreen': (context) => const UserDashboardScreen(userUid: ''),
-        '/shopownerDashboard': (context) => const ShopScreen(userUid: ''),
+        '/shopownerDashboard': (context) => const ShopownerDashboard(userUid: ''),
         // '/signup': (context) => const InformationScreen(userUid: ''),
         '/adminDashboard': (context) => const AdminScreen(),
       },

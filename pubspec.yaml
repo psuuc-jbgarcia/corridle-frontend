@@ -32,6 +32,7 @@ dependencies:
   shimmer: ^2.0.0
   path: ^1.9.1
   file_picker: ^10.2.0
+  awesome_dialog: ^3.2.1
 
 
     

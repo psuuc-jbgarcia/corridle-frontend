@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:corridle/Authentication/login.dart';
 import 'package:corridle/Store_Dashboard/storeregistrationscreen.dart';
 import 'package:corridle/User_Dashboard/user_dasboard.dart';
@@ -69,52 +70,103 @@ class _InformationScreenState extends State<InformationScreen> {
         print('DECODED JSON: $data');
 
         if (data['success'] == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Information saved.')),
-          );
-
-          if (_userType == 'Customer') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => LoginScreen()),
-            );
-          } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => StoreRegistrationScreen(
-                  userUid: userUid,
-                  email: _emailController.text.trim(),
-                  phone_number: _phoneNumberController.text.trim(),
+          _showSuccessDialog("Information saved.", onClose: () {
+            if (_userType == 'Customer') {
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => StoreRegistrationScreen(
+                    userUid: userUid,
+                    email: _emailController.text.trim(),
+                    phone_number: _phoneNumberController.text.trim(),
+                  ),
                 ),
-              ),
-            );
-          }
+              );
+            }
+          });
         } else {
-          _showCenterAlert(context, 'Server Error: ${data['message']}');
+          _showErrorDialog('Server Error: ${data['message']}');
         }
       } else {
-        _showCenterAlert(context, 'HTTP Error: ${response.statusCode}');
+        _showErrorDialog('HTTP Error: ${response.statusCode}');
       }
     } catch (e) {
-      _showCenterAlert(context, 'Failed to send request: $e');
+      _showErrorDialog('Failed to send request: $e');
     }
   }
 
-  void _showCenterAlert(BuildContext context, String message) {
-    showDialog(
+  void _showErrorDialog(String message) {
+    AwesomeDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        alignment: Alignment.center,
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("OK"),
-          ),
-        ],
+      dialogType: DialogType.noHeader,
+      animType: AnimType.rightSlide,
+      width: MediaQuery.of(context).size.width * 0.75,
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Error',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15, height: 1.4),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text('Close'),
+              ),
+            ),
+          ],
+        ),
       ),
-    );
+    ).show();
+  }
+
+  void _showSuccessDialog(String message, {required VoidCallback onClose}) {
+    AwesomeDialog(
+      context: context,
+      dialogType: DialogType.noHeader,
+      animType: AnimType.scale,
+      width: MediaQuery.of(context).size.width * 0.75,
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Success',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15, height: 1.4),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: onClose,
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                child: const Text('Continue'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).show();
   }
 
   @override
