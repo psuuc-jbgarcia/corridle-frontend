@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:corridle/Authentication/sign_up.dart';
+import 'package:corridle/Store_Dashboard/businessdashboard.dart';
 import 'package:corridle/User_Dashboard/user_dasboard.dart';
 import 'package:corridle/authentication/information.dart';
 import 'package:corridle/const_file/const.dart';
@@ -63,7 +64,7 @@ class _LoginPageState extends State<LoginScreen> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (_) => ShopScreen(userUid: userId),
+                builder: (_) => ShopownerDashboard(userUid: userId,),
               ),
             );
           } else if (userType == 'Customer') {
