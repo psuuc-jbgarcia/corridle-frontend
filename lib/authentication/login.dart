@@ -3,6 +3,7 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:corridle/Authentication/sign_up.dart';
 import 'package:corridle/Store_Dashboard/businessdashboard.dart';
 import 'package:corridle/User_Dashboard/user_dasboard.dart';
+import 'package:corridle/authentication/ForgotPasswordScreen.dart';
 import 'package:corridle/authentication/information.dart';
 import 'package:corridle/const_file/const.dart';
 import 'package:flutter/material.dart';
@@ -206,6 +207,22 @@ class _LoginPageState extends State<LoginScreen> {
                         ),
                       ),
                     ),
+                    Align(
+  alignment: Alignment.centerRight,
+  child: TextButton(
+    onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+      );
+    },
+    child: const Text(
+      'Forgot Password?',
+      style: TextStyle(color: Colors.blue),
+    ),
+  ),
+),
+
                     const SizedBox(height: 10),
                     SizedBox(
                       width: double.infinity,
