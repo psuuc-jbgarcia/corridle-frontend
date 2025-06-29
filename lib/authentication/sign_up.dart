@@ -124,7 +124,7 @@ class _SignUpScreenState extends State<SignUpScreen> with SingleTickerProviderSt
         _showError('Server error: ${response.statusCode}');
       }
     } catch (e) {
-      _showError('Network error: $e');
+      _showError('Network error: $e or The database server is offline');
     }
   }
 

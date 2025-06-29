@@ -7,6 +7,7 @@ import 'package:corridle/authentication/information.dart';
 import 'package:corridle/const_file/const.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -43,7 +44,17 @@ class _LoginPageState extends State<LoginScreen> {
           final userId = data['userId'];
           final userType = data['userType'];
           final hasStoreInfo = int.tryParse(data['has_store_info'].toString()) ?? 0;
+          final storeId = data['storeId']?.toString() ?? '';
+          final email = data['email'];
 
+            // ✅ Save session
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('user_id', userId);
+  await prefs.setString('email', email);
+  await prefs.setString('user_type', userType);
+  if (userType == 'Shop Owner') {
+    await prefs.setString('store_id', storeId);
+  }
           AwesomeDialog(
             context: context,
             dialogType: DialogType.noHeader,
@@ -52,18 +63,25 @@ class _LoginPageState extends State<LoginScreen> {
             desc: 'Welcome back! Redirecting to your dashboard...',
             btnOkText: 'Continue',
             btnOkOnPress: () {
-              if (hasStoreInfo == 0) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => InformationScreen(userUid: userId, email: email)),
-                );
-              } else if (userType == 'Shop Owner') {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => ShopownerDashboard(userUid: userId)),
-                );
-              } else if (userType == 'Customer') {
+             if (hasStoreInfo == 0) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => InformationScreen(userUid: userId, email: email),
+      ),
+    );
+  } else if (userType == 'Shop Owner') {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ShopownerDashboard(
+          userUid: userId,
+          storeid: storeId, // ✅ pass storeId here
+        ),
+      ),
+    );
+  }
+ else if (userType == 'Customer') {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (_) => UserDashboardScreen(userUid: userId)),
@@ -83,7 +101,7 @@ class _LoginPageState extends State<LoginScreen> {
         showError('Server error: ${response.statusCode}');
       }
     } catch (e) {
-      showError('Error: $e');
+      showError('Error: $e or The database is offline.');
     }
   }
 

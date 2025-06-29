@@ -1,3 +1,4 @@
+import 'package:corridle/User_Dashboard/test.dart';
 import 'package:flutter/material.dart';
 
 class UserDashboardScreen extends StatelessWidget {
@@ -53,13 +54,29 @@ class UserDashboardScreen extends StatelessWidget {
           // Main content area
           Expanded(
             child: Center(
-              child: Container(
-                padding: const EdgeInsets.all(40),
-                child: Text(
-                  'Welcome to Corridle Dashboard!\nYour ID is $userUid',
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(40),
+                    child: Text(
+                      'Welcome to Corridle Dashboard!\nYour ID is $userUid',
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const UserDashboardTest(),
+                        ),
+                      );
+                    },
+                    child: const Text('Go to Test Page'),
+                  ),
+                ],
               ),
             ),
           ),
@@ -73,7 +90,7 @@ class UserDashboardScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: TextButton(
         onPressed: () {
-          // Add navigation logic here
+          // You can navigate based on title later
         },
         child: Text(
           title,

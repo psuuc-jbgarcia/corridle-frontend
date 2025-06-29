@@ -5,11 +5,11 @@ import 'package:corridle/Store_Dashboard/appbar/message.dart';
 import 'package:corridle/Store_Dashboard/appbar/notification.dart';
 import 'package:corridle/Store_Dashboard/appbar/post_performance.dart';
 import 'package:corridle/Store_Dashboard/appbar/profile.dart';
+import 'package:corridle/Store_Dashboard/test.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import 'analytics.dart';
-import 'feedback.dart';
 import 'dashboard.dart';
 import 'post.dart';
 import 'schedule.dart';
@@ -18,8 +18,10 @@ import 'review.dart';
 
 class ShopownerDashboard extends StatefulWidget {
   final String userUid;
+    final String storeid;
 
-  const ShopownerDashboard({Key? key, required this.userUid}) : super(key: key);
+
+  const ShopownerDashboard({Key? key, required this.userUid,required this.storeid}) : super(key: key);
 
   @override
   State<ShopownerDashboard> createState() => _ShopownerDashboardState();
@@ -40,19 +42,28 @@ class _ShopownerDashboardState extends State<ShopownerDashboard> {
   }
 
   Future<void> fetchStoreData() async {
-    final response = await http.post(
-      Uri.parse('https://yourdomain.com/api/get_store.php'),
-      body: {'user_uid': widget.userUid},
-    );
+    try {
+      final response = await http.post(
+        Uri.parse('https://yourdomain.com/api/get_store.php'),
+        body: {'user_uid': widget.userUid},
+      );
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      if (data['success'] == true) {
-        setState(() {
-          storeName = data['store']['business_name'] ?? 'Store Name';
-          businessLogo = data['store']['business_logo'] ?? '';
-        });
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data != null && data['success'] == true && data['store'] != null) {
+          final store = data['store'];
+          setState(() {
+            storeName = (store['business_name'] ?? 'Store Name').toString();
+            businessLogo = (store['business_logo'] ?? '').toString();
+          });
+        } else {
+          debugPrint("Invalid store data: $data");
+        }
+      } else {
+        debugPrint("HTTP error: ${response.statusCode}");
       }
+    } catch (e) {
+      debugPrint("Exception: $e");
     }
   }
 
@@ -63,7 +74,6 @@ class _ShopownerDashboardState extends State<ShopownerDashboard> {
     'Analytics': const AnalyticsScreen(),
     'Team Schedule': const ScheduleScreen(),
     'Settings': const SettingScreen(),
-    'Feedback': const FeedbackScreen(),
     'Home': const HomeMainScreen(),
     'My Business': const dashScreen(),
     'Notifications': const Notificationscreen(),
@@ -108,11 +118,13 @@ class _ShopownerDashboardState extends State<ShopownerDashboard> {
     final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
+      
       backgroundColor: const Color(0xFFF5F6FA),
       drawer: isMobile && !_isSidebarOpen
           ? Drawer(child: _buildSidebarContent(isMobile: true))
           : null,
       appBar: AppBar(
+        
         backgroundColor: Colors.white,
         elevation: 1,
         leading: Builder(
@@ -142,25 +154,34 @@ class _ShopownerDashboardState extends State<ShopownerDashboard> {
           if (!isMobile)
             Row(
               children: [
-                _navChip('Home', onTap: () => _changeScreen('Home'), selected: _selectedScreen == 'Home'),
-                _navChip('My Business', onTap: () => _changeScreen('DashBoard'), selected: _selectedScreen == 'DashBoard'),
-                _navChip('Notifications', onTap: () => _changeScreen('Notifications'), selected: _selectedScreen == 'Notifications'),
-                _navChip('Messages & Request', onTap: () => _changeScreen('Messages & Request'), selected: _selectedScreen == 'Messages & Request'),
+                
+           _navChip('Home', onTap: () => _changeScreen('Home'), selected: _selectedScreen == 'Home'),
+        _navChip('My Business', onTap: () => _changeScreen('DashBoard'), selected: _selectedScreen == 'DashBoard'),
+        _navChip('Notifications', onTap: () => _changeScreen('Notifications'), selected: _selectedScreen == 'Notifications'),
+        _navChip('Messages & Request', onTap: () => _changeScreen('Messages & Request'), selected: _selectedScreen == 'Messages & Request'),
+_navChip('UID: ${widget.userUid}', onTap: () {}, selected: false),
+_navChip('SID: ${widget.storeid}', onTap: () {}, selected: false),
+_navChip('Test Page', onTap: () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => const ShopOwnerTestScreen()),
+  );
+}, selected: false),
+
               ],
             ),
           Padding(
             padding: const EdgeInsets.only(right: 12, left: 8),
-            child: businessLogo.isNotEmpty
-                ? CircleAvatar(
-                    radius: 18,
-                    backgroundImage: NetworkImage(businessLogo),
-                    backgroundColor: Colors.grey.shade200,
-                  )
-                : const CircleAvatar(
-                    radius: 18,
-                    backgroundColor: Colors.grey,
-                    child: Icon(Icons.store, color: Colors.white),
-                  ),
+            child: CircleAvatar(
+              radius: 18,
+              backgroundColor: Colors.grey.shade200,
+              backgroundImage: businessLogo.isNotEmpty
+                  ? NetworkImage(businessLogo)
+                  : null,
+              child: businessLogo.isEmpty
+                  ? const Icon(Icons.store, color: Colors.white)
+                  : null,
+            ),
           ),
         ],
       ),
@@ -175,7 +196,9 @@ class _ShopownerDashboardState extends State<ShopownerDashboard> {
           Expanded(
             child: Column(
               children: [
+                
                 const SizedBox(height: 30),
+                
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -208,17 +231,16 @@ class _ShopownerDashboardState extends State<ShopownerDashboard> {
       child: Column(
         children: [
           const SizedBox(height: 20),
-          businessLogo.isNotEmpty
-              ? CircleAvatar(
-                  radius: 50,
-                  backgroundImage: NetworkImage(businessLogo),
-                  backgroundColor: Colors.grey.shade200,
-                )
-              : const CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.grey,
-                  child: Icon(Icons.store, color: Colors.white, size: 40),
-                ),
+          CircleAvatar(
+            radius: 50,
+            backgroundColor: Colors.grey.shade300,
+            backgroundImage: businessLogo.isNotEmpty
+                ? NetworkImage(businessLogo)
+                : null,
+            child: businessLogo.isEmpty
+                ? const Icon(Icons.store, color: Colors.white, size: 40)
+                : null,
+          ),
           const SizedBox(height: 12),
           Text(storeName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
           const Text('Web application services', style: TextStyle(fontSize: 12)),

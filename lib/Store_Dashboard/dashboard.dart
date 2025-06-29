@@ -16,27 +16,27 @@ class _dashScreenState extends State<dashScreen> {
   @override
   void initState() {
     super.initState();
-    fetchPosts();
+    // fetchPosts();
   }
 
-  Future<void> fetchPosts() async {
-    final response = await http.get(Uri.parse('https://yourdomain.com/api/get_posts.php'));
+  // Future<void> fetchPosts() async {
+  //   final response = await http.get(Uri.parse(''));
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      if (data['success'] == true) {
-        setState(() {
-          posts = data['posts'];
-          isLoading = false;
-        });
-      } else {
-        setState(() => isLoading = false);
-      }
-    } else {
-      print("Error: ${response.body}");
-      setState(() => isLoading = false);
-    }
-  }
+  //   if (response.statusCode == 200) {
+  //     final data = json.decode(response.body);
+  //     if (data['success'] == true) {
+  //       setState(() {
+  //         posts = data['posts'] ?? [];
+  //         isLoading = false;
+  //       });
+  //     } else {
+  //       setState(() => isLoading = false);
+  //     }
+  //   } else {
+  //     print("Error: ${response.body}");
+  //     setState(() => isLoading = false);
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -60,8 +60,7 @@ class _dashScreenState extends State<dashScreen> {
                     itemCount: posts.length,
                     itemBuilder: (context, index) {
                       final post = posts[index];
-                      final description = post['description'] ?? 'No description';
-                      final imageUrl = post['image_url'] ?? '';
+                      final description = post['description']?.toString() ?? 'No description';
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
@@ -73,40 +72,20 @@ class _dashScreenState extends State<dashScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (imageUrl.isNotEmpty)
-                                ClipRRect(
-                                  borderRadius: const BorderRadius.vertical(
-                                      top: Radius.circular(12.0)),
-                                  child: Image.network(
-                                    imageUrl,
-                                    width: double.infinity,
-                                    height: 250,
-                                    fit: BoxFit.cover,
-                                    loadingBuilder: (context, child, loadingProgress) {
-                                      if (loadingProgress == null) return child;
-                                      return Center(
-                                        child: CircularProgressIndicator(
-                                          value: loadingProgress.expectedTotalBytes != null
-                                              ? loadingProgress.cumulativeBytesLoaded /
-                                                  (loadingProgress.expectedTotalBytes ?? 1)
-                                              : null,
-                                        ),
-                                      );
-                                    },
-                                    errorBuilder: (context, error, stackTrace) {
-                                      print("Image error: $error");
-                                      return const SizedBox(
-                                        height: 250,
-                                        child: Center(child: Text('Failed to load image')),
-                                      );
-                                    },
-                                  ),
-                                )
-                              else
-                                const SizedBox(
-                                  height: 250,
-                                  child: Center(child: Text('No Image Available')),
+                              Container(
+                                width: double.infinity,
+                                height: 150,
+                                decoration: const BoxDecoration(
+                                  color: Colors.grey,
+                                  borderRadius: BorderRadius.vertical(top: Radius.circular(12.0)),
                                 ),
+                                child: const Center(
+                                  child: Text(
+                                    'Business Logo / Image Placeholder',
+                                    style: TextStyle(color: Colors.white, fontSize: 16),
+                                  ),
+                                ),
+                              ),
                               Padding(
                                 padding: const EdgeInsets.all(16.0),
                                 child: Text(

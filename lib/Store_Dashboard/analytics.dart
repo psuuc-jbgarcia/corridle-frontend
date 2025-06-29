@@ -16,30 +16,30 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   @override
   void initState() {
     super.initState();
-    fetchAnalytics();
+    // fetchAnalytics();
   }
 
-  Future<void> fetchAnalytics() async {
-    final response = await http.post(
-      Uri.parse('https://yourdomain.com/api/get_analytics.php'),
-      body: {
-        'user_uid': 'your_user_uid_here', // replace dynamically if needed
-      },
-    );
+  // Future<void> fetchAnalytics() async {
+  //   final response = await http.post(
+  //     Uri.parse('https://yourdomain.com/api/get_analytics.php'),
+  //     body: {
+  //       'user_uid': 'your_user_uid_here', // replace dynamically if needed
+  //     },
+  //   );
 
-    if (response.statusCode == 200) {
-      final result = json.decode(response.body);
-      if (result['success'] == true) {
-        setState(() {
-          analyticsData = result['data'];
-          isLoading = false;
-        });
-      }
-    } else {
-      setState(() => isLoading = false);
-      print('Failed to fetch analytics data');
-    }
-  }
+  //   if (response.statusCode == 200) {
+  //     final result = json.decode(response.body);
+  //     if (result['success'] == true) {
+  //       setState(() {
+  //         analyticsData = result['data'];
+  //         isLoading = false;
+  //       });
+  //     }
+  //   } else {
+  //     setState(() => isLoading = false);
+  //     print('Failed to fetch analytics data');
+  //   }
+  // }
 
   Widget buildCard(String title, String value, IconData icon, Color color) {
     return Card(
