@@ -53,8 +53,6 @@ class _ShopownerDashboardState extends State<ShopownerDashboard> {
           businessLogo = data['store']['business_logo'] ?? '';
         });
       }
-    } else {
-      print('Failed to load store data');
     }
   }
 
@@ -98,8 +96,6 @@ class _ShopownerDashboardState extends State<ShopownerDashboard> {
         return const ProfileScreen();
       case 'Analytics':
         return const AnalyticsScreen();
-      case 'Post Performance':
-        return const postScreen();
       case 'Create an ad':
         return const adsScreen();
       default:

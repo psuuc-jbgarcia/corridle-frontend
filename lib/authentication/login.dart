@@ -3,7 +3,6 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:corridle/Authentication/sign_up.dart';
 import 'package:corridle/Store_Dashboard/businessdashboard.dart';
 import 'package:corridle/User_Dashboard/user_dasboard.dart';
-import 'package:corridle/authentication/ForgotPasswordScreen.dart';
 import 'package:corridle/authentication/information.dart';
 import 'package:corridle/const_file/const.dart';
 import 'package:flutter/material.dart';
@@ -45,65 +44,37 @@ class _LoginPageState extends State<LoginScreen> {
           final userType = data['userType'];
           final hasStoreInfo = int.tryParse(data['has_store_info'].toString()) ?? 0;
 
-          // Show success dialog before redirect
           AwesomeDialog(
             context: context,
             dialogType: DialogType.noHeader,
             animType: AnimType.scale,
+            title: 'Login Successful!',
+            desc: 'Welcome back! Redirecting to your dashboard...',
+            btnOkText: 'Continue',
+            btnOkOnPress: () {
+              if (hasStoreInfo == 0) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => InformationScreen(userUid: userId, email: email)),
+                );
+              } else if (userType == 'Shop Owner') {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => ShopownerDashboard(userUid: userId)),
+                );
+              } else if (userType == 'Customer') {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => UserDashboardScreen(userUid: userId)),
+                );
+              } else if (userType == 'ADMIN') {
+                showError('Admin dashboard is under development.');
+              } else {
+                showError('Unknown user type.');
+              }
+            },
             width: MediaQuery.of(context).size.width * 0.75,
-            body: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Login Successful!',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Welcome back! Redirecting to your dashboard...',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 15, height: 1.4),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop(); // close dialog
-                        Future.delayed(const Duration(milliseconds: 100), () {
-                          if (hasStoreInfo == 0) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => InformationScreen(userUid: userId, email: email),
-                              ),
-                            );
-                          } else if (userType == 'Shop Owner') {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(builder: (_) => ShopownerDashboard(userUid: userId)),
-                            );
-                          } else if (userType == 'Customer') {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(builder: (_) => UserDashboardScreen(userUid: userId)),
-                            );
-                          } else if (userType == 'ADMIN') {
-                            showError('Admin dashboard is under development.');
-                          } else {
-                            showError('Unknown user type.');
-                          }
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                      child: const Text('Continue'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ).show();
         } else {
           showError(data['message'] ?? 'Login failed');
@@ -119,36 +90,24 @@ class _LoginPageState extends State<LoginScreen> {
   void showError(String message) {
     AwesomeDialog(
       context: context,
-      dialogType: DialogType.noHeader,
-      animType: AnimType.rightSlide,
+      dialogType: DialogType.info,
+      animType: AnimType.scale,
+      title: 'Oops!',
+      desc: message,
+      btnOkOnPress: () {},
       width: MediaQuery.of(context).size.width * 0.75,
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Oops!',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 15, height: 1.4),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text('Close'),
-              ),
-            ),
-          ],
-        ),
-      ),
+    ).show();
+  }
+
+  void showResetDialog(String message) {
+    AwesomeDialog(
+      context: context,
+      dialogType: DialogType.info,
+      animType: AnimType.scale,
+      title: 'Forgot Password',
+      desc: message,
+      btnOkOnPress: () {},
+      width: MediaQuery.of(context).size.width * 0.75,
     ).show();
   }
 
@@ -164,10 +123,8 @@ class _LoginPageState extends State<LoginScreen> {
             children: [
               Image.asset('assets/images/Logo.jpg', height: 120),
               const SizedBox(height: 20),
-              const Text(
-                'Welcome back',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
+              const Text('Welcome back',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
               const SizedBox(height: 20),
               Container(
                 padding: const EdgeInsets.all(20),
@@ -196,33 +153,132 @@ class _LoginPageState extends State<LoginScreen> {
                         labelText: 'Password',
                         border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
-                          icon: Icon(
-                            _passwordVisible ? Icons.visibility : Icons.visibility_off,
-                          ),
+                          icon: Icon(_passwordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off),
                           onPressed: () {
-                            setState(() {
-                              _passwordVisible = !_passwordVisible;
-                            });
+                            setState(() => _passwordVisible = !_passwordVisible);
                           },
                         ),
                       ),
                     ),
                     Align(
-  alignment: Alignment.centerRight,
-  child: TextButton(
-    onPressed: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
-      );
-    },
-    child: const Text(
-      'Forgot Password?',
-      style: TextStyle(color: Colors.blue),
-    ),
-  ),
-),
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          final TextEditingController _resetEmailController =
+                              TextEditingController();
+                          bool isSubmitting = false;
 
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return StatefulBuilder(
+                                builder: (context, setState) {
+                                  Future<void> sendResetRequest() async {
+                                    final email = _resetEmailController.text.trim();
+
+                                    if (email.isEmpty) {
+                                      showResetDialog('Please enter your email address.');
+                                      return;
+                                    }
+
+                                    setState(() => isSubmitting = true);
+
+                                    try {
+                                      final response = await http.post(
+                                        Uri.parse(forgot_password),
+                                        headers: {'Content-Type': 'application/json'},
+                                        body: jsonEncode({'email': email}),
+                                      );
+
+                                      final result = jsonDecode(response.body);
+                                      Navigator.of(context).pop();
+
+                                      if (response.statusCode == 200 &&
+                                          result['success'] == true) {
+                                        showResetDialog(
+                                            'A password reset link has been sent to your email.');
+                                      } else {
+                                        showResetDialog(
+                                            result['message'] ?? 'Something went wrong.');
+                                      }
+                                    } catch (e) {
+                                      Navigator.of(context).pop();
+                                      showResetDialog('Network error. Please try again later.');
+                                    }
+
+                                    setState(() => isSubmitting = false);
+                                  }
+
+                                  return Dialog(
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16)),
+                                    backgroundColor: Colors.white,
+                                    child: ConstrainedBox(
+                                      constraints:
+                                          const BoxConstraints(maxWidth: 300),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(20),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Text('Reset Password',
+                                                style: TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold)),
+                                            const SizedBox(height: 10),
+                                            TextField(
+                                              controller: _resetEmailController,
+                                              decoration: const InputDecoration(
+                                                labelText: 'Enter your email',
+                                                border: OutlineInputBorder(),
+                                              ),
+                                              keyboardType: TextInputType.emailAddress,
+                                            ),
+                                            const SizedBox(height: 20),
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.end,
+                                              children: [
+                                                TextButton(
+                                                  child: const Text('Cancel'),
+                                                  onPressed: () =>
+                                                      Navigator.of(context).pop(),
+                                                ),
+                                                ElevatedButton(
+                                                  onPressed: isSubmitting
+                                                      ? null
+                                                      : sendResetRequest,
+                                                  child: isSubmitting
+                                                      ? const SizedBox(
+                                                          width: 18,
+                                                          height: 18,
+                                                          child:
+                                                              CircularProgressIndicator(
+                                                            strokeWidth: 2,
+                                                            color: Colors.white,
+                                                          ),
+                                                        )
+                                                      : const Text('Send'),
+                                                ),
+                                              ],
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          );
+                        },
+                        child: const Text(
+                          'Forgot Password?',
+                          style: TextStyle(color: Colors.blue),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 10),
                     SizedBox(
                       width: double.infinity,
@@ -247,7 +303,8 @@ class _LoginPageState extends State<LoginScreen> {
                           MaterialPageRoute(builder: (_) => const SignUpScreen()),
                         );
                       },
-                      child: const Text('Create account', style: TextStyle(color: Colors.black)),
+                      child: const Text('Create account',
+                          style: TextStyle(color: Colors.black)),
                     ),
                   ],
                 ),
@@ -261,7 +318,8 @@ class _LoginPageState extends State<LoginScreen> {
             width: double.infinity,
             child: const Column(
               children: [
-                Text('Terms of Use  Privacy Policy  Support', style: TextStyle(fontSize: 14)),
+                Text('Terms of Use  Privacy Policy  Support',
+                    style: TextStyle(fontSize: 14)),
                 SizedBox(height: 5),
                 Text('© Corridle 2025', style: TextStyle(fontSize: 14)),
               ],

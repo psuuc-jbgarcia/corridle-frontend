@@ -3,12 +3,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:corridle/authentication/login.dart';
 import 'package:corridle/authentication/sign_up.dart';
 
-class UserDashboard extends StatefulWidget {
+class LandingPage extends StatefulWidget {
   @override
-  _UserDashboardState createState() => _UserDashboardState();
+  _LandingPageState createState() => _LandingPageState();
 }
 
-class _UserDashboardState extends State<UserDashboard> {
+class _LandingPageState extends State<LandingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
